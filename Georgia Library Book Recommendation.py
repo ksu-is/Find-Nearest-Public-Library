@@ -27,20 +27,44 @@ def recommend_book(genre):
     
     return title, author
 
+
 # Welcome the user
 print("Welcome to the book recommendation system!\n")
 
+# Display the top 5 most common book genres
+print("Here are the top 5 most common book genres:")
+print("1. Fiction")
+print("2. Nonfiction")
+print("3. Mystery")
+print("4. Romance")
+print("5. Sci-Fi/Fantasy")
+
 while True:
     # Get user input for genre
-    genre = input("What genre of book are you interested in? (Or enter 'exit' to quit) ").lower()
+    genre_choice = input("\nEnter the number corresponding to the genre you are interested in (Or enter 'exit' to quit): ")
     
-    if genre == 'exit':
+    if genre_choice == 'exit':
         break
+    
+    # Map genre_choice to the corresponding genre
+    genre_map = {
+        '1': 'fiction',
+        '2': 'nonfiction',
+        '3': 'mystery',
+        '4': 'romance',
+        '5': 'science-fiction-and-fantasy'
+    }
+    
+    genre = genre_map.get(genre_choice)
+    
+    if genre is None:
+        print("\nInvalid choice. Please choose a number between 1 and 5.")
+        continue
     
     # Recommend a book from the top New York Times bestsellers list for the given genre
     try:
         title, author = recommend_book(genre)
-        print(f"\nBased on the current top New York Times bestsellers in {genre}, we recommend '{title}' by {author}.")
+        print(f"\nBased on the current top New York Times bestsellers in {genre.capitalize()}, we recommend '{title}' by {author}.")
         
         # Ask if the user wants to check the availability of the recommended book at the local library
         check_availability = input("Would you like to see if the book is available at the nearest library? (y/n) ").lower()
@@ -52,13 +76,4 @@ while True:
             # Check if the recommended book is available at the nearest library
             name, address = get_nearest_library(zip_code)
             book_title = title.replace("'", "\\'")  # Escape single quotes in the book title for the URL
-            search_url = f'https://www.gapines.org/eg/opac/results?bookbag=87459&bool=and&qtype=title&query={book_title}&_adv=1&sort=pubdate.descending&locg=1&pubdate=is&pubdate.year=&pubdate.op=%3D&limit=avl'
-            response = requests.get(search_url)
-            soup = BeautifulSoup(response.content, 'html.parser')
-
-            # Check if the book is available at the library
-            if soup.find('div', {'class': 'results_summary'}).text.strip() != '0 records found.':
-                print(f"\nThe book '{title}' by {author} is available at the nearest library:\n{name}\n{address}")
-            else:
-                print
-
+            search_url =
