@@ -27,23 +27,38 @@ def recommend_book(genre):
     
     return title, author
 
-# Get user input for genre and zip code
-genre = input("What genre of book are you interested in? ")
-zip_code = input("What is your zip code? ")
+# Welcome the user
+print("Welcome to the book recommendation system!\n")
 
-# Recommend a book from the top New York Times bestsellers list for the given genre
-title, author = recommend_book(genre)
-print(f"\nBased on the current top New York Times bestsellers in {genre}, we recommend '{title}' by {author}.")
+while True:
+    # Get user input for genre
+    genre = input("What genre of book are you interested in? (Or enter 'exit' to quit) ").lower()
+    
+    if genre == 'exit':
+        break
+    
+    # Recommend a book from the top New York Times bestsellers list for the given genre
+    try:
+        title, author = recommend_book(genre)
+        print(f"\nBased on the current top New York Times bestsellers in {genre}, we recommend '{title}' by {author}.")
+        
+        # Ask if the user wants to check the availability of the recommended book at the local library
+        check_availability = input("Would you like to see if the book is available at the nearest library? (y/n) ").lower()
+        
+        if check_availability == 'y':
+            # Get user input for zip code
+            zip_code = input("What is your zip code? ")
+            
+            # Check if the recommended book is available at the nearest library
+            name, address = get_nearest_library(zip_code)
+            book_title = title.replace("'", "\\'")  # Escape single quotes in the book title for the URL
+            search_url = f'https://www.gapines.org/eg/opac/results?bookbag=87459&bool=and&qtype=title&query={book_title}&_adv=1&sort=pubdate.descending&locg=1&pubdate=is&pubdate.year=&pubdate.op=%3D&limit=avl'
+            response = requests.get(search_url)
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-# Check if the recommended book is available at the nearest library
-name, address = get_nearest_library(zip_code)
-book_title = title.replace("'", "\\'")  # Escape single quotes in the book title for the URL
-search_url = f'https://www.gapines.org/eg/opac/results?bookbag=87459&bool=and&qtype=title&query={book_title}&_adv=1&sort=pubdate.descending&locg=1&pubdate=is&pubdate.year=&pubdate.op=%3D&limit=avl'
-response = requests.get(search_url)
-soup = BeautifulSoup(response.content, 'html.parser')
+            # Check if the book is available at the library
+            if soup.find('div', {'class': 'results_summary'}).text.strip() != '0 records found.':
+                print(f"\nThe book '{title}' by {author} is available at the nearest library:\n{name}\n{address}")
+            else:
+                print
 
-# Check if the book is available at the library
-if soup.find('div', {'class': 'results_summary'}).text.strip() != '0 records found.':
-    print(f"\nThe book '{title}' by {author} is available at the nearest library:\n{name}\n{address}")
-else:
-    print(f"\nThe book '{title}' by {author} is not available at the nearest library.")
