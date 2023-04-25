@@ -1,0 +1,49 @@
+import requests
+from bs4 import BeautifulSoup
+
+def get_nearest_library(zip_code):
+    # Construct the request payload
+    payload = {'zipCode': zip_code, 'miles': '10', 'searchType': 'zipcode'}
+    
+    # Send the request and get the response
+    response = requests.post('https://pines.georgialibraries.org/pinesLocator/search.do', data=payload)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Parse the response HTML to get the name and address of the nearest library
+    name = soup.find('div', {'class': 'name'}).text.strip()
+    address = soup.find('div', {'class': 'address'}).text.strip()
+    
+    return name, address
+
+def recommend_book(genre):
+    # Get the top New York Times bestsellers list for the given genre
+    url = f'https://www.nytimes.com/books/best-sellers/{genre}-paperback-books/'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Parse the response HTML to get the title and author of the first book on the list
+    title = soup.find('h3', {'class': 'css-5pe77f e1voiwgp0'}).text.strip()
+    author = soup.find('p', {'class': 'css-hjukut e1wijjv30'}).text.strip()
+    
+    return title, author
+
+# Get user input for genre and zip code
+genre = input("What genre of book are you interested in? ")
+zip_code = input("What is your zip code? ")
+
+# Recommend a book from the top New York Times bestsellers list for the given genre
+title, author = recommend_book(genre)
+print(f"\nBased on the current top New York Times bestsellers in {genre}, we recommend '{title}' by {author}.")
+
+# Check if the recommended book is available at the nearest library
+name, address = get_nearest_library(zip_code)
+book_title = title.replace("'", "\\'")  # Escape single quotes in the book title for the URL
+search_url = f'https://www.gapines.org/eg/opac/results?bookbag=87459&bool=and&qtype=title&query={book_title}&_adv=1&sort=pubdate.descending&locg=1&pubdate=is&pubdate.year=&pubdate.op=%3D&limit=avl'
+response = requests.get(search_url)
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# Check if the book is available at the library
+if soup.find('div', {'class': 'results_summary'}).text.strip() != '0 records found.':
+    print(f"\nThe book '{title}' by {author} is available at the nearest library:\n{name}\n{address}")
+else:
+    print(f"\nThe book '{title}' by {author} is not available at the nearest library.")
